@@ -1,17 +1,17 @@
+using System;
+
 public class Program
 {
-   public static void Main(string[] args)
+    public static void Main(string[] args)
     {
         try
         {
-            // Read temperature input
             string input = Console.ReadLine();
             if (!double.TryParse(input, out double temperature))
             {
                 throw new SystemException("Input string was not in a correct format.");
             }
             
-            // Read conversion type input
             string conversionType = Console.ReadLine()?.Trim().ToUpper();
             
             if (conversionType == "C")
@@ -34,5 +34,6 @@ public class Program
             Console.WriteLine("Error: Invalid input provided.");
             Console.WriteLine($"Exception Message: {ex.Message}");
         }
+
     }
 }
