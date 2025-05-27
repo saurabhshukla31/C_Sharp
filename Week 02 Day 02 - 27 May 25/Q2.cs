@@ -32,3 +32,40 @@ public class CricketMatch
     }
 }
 
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        CricketMatch match = new CricketMatch();
+
+      
+        string input = Console.ReadLine();
+        string[] scoreStrings = input.Split(' ');
+
+        try
+        {
+            foreach (string scoreString in scoreStrings)
+            {
+                if (int.TryParse(scoreString, out int score))
+                {
+                    match.AddPlayerScore(score);
+                }
+                else
+                {
+                    throw new ArgumentException("Invalid score. Score must be between 0 and 50.");
+                }
+            }
+
+            int totalScore = match.CalculateTotalScore();
+            Console.WriteLine($"Total score of the cricket team: {totalScore}");
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}
