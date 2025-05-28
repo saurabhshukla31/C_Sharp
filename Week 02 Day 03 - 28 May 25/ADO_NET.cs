@@ -1,132 +1,132 @@
-using empManagement.Models;
-using System;
+using EmployeeManagement.Models;
 using System.Data;
 using System.Data.SqlClient;
 
+// Static class because connection string needs to be common everywhere and should not be changed
 public static class ConnectionStringProvider
 {
-    public static string ConnectionString { get; } =
-        "User ID=sa;password=examlyMssql@123; server=localhost;Database=appdb;trusted_connection=false;Persist Security Info=False;Encrypt=False";
+    public static string ConnectionString { get; } = 
+        "User ID=sa;password=examlyMssql@123;server=localhost;Database=appdb;trusted_connection=false;Persist Security Info=False;Encrypt=False";
 }
 
 public class Program
 {
-    static string myConnection = ConnectionStringProvider.ConnectionString;
+    // Used by all the functions => accessible to all the class methods
+    public static string conn = ConnectionStringProvider.ConnectionString;
 
-    public static void AddEmployees(Employees employees)
+    public static void AddEmployee(Employees employees)
     {
-        using (SqlConnection sqlCon = new SqlConnection(myConnection))
+        // At this point, connect to database and save the record
+        using (SqlConnection con = new SqlConnection(conn)) 
         {
-            SqlCommand sqlCmd = new SqlCommand("SELECT * FROM Employees", sqlCon);
-            SqlDataAdapter sqlAdapt = new SqlDataAdapter(sqlCmd);
-            SqlCommandBuilder sqlBuild = new SqlCommandBuilder(sqlAdapt);
-            DataSet ds = new DataSet();
-            sqlAdapt.Fill(ds, "Employees");
+            // If we write anything inside 'using' block, it is persistent till the execution of the function completes.
+            // As soon as the closing braces of the function are encountered, whatever is passed inside using block is removed from memory.
 
-            DataTable dt = ds.Tables["Employees"];
-            DataRow dr = dt.NewRow();
+            SqlCommand cmd = new SqlCommand("select * from Employees", con);
+            SqlDataAdapter adapt = new SqlDataAdapter(cmd);
+            SqlCommandBuilder build = new SqlCommandBuilder(adapt);
+            DataSet ds = new DataSet(); // Dataset is a collection of tables
+            adapt.Fill(ds, "Employees"); // Dataset gets disconnected and into our local space
+            // Now we have to save a new record
+            DataTable dt = new DataTable();
+            dt = ds.Tables["Employees"]; // Now dt is pointing to 1 table in ds (here, the Employees table)
+
+            DataRow dr = dt.NewRow(); // Reference for an empty record
             dr["EmployeeName"] = employees.EmployeeName;
             dr["EmployeeAge"] = employees.EmployeeAge;
             dr["EmployeeLastDateJob"] = employees.EmployeeLastDateJob;
             dt.Rows.Add(dr);
-            sqlAdapt.Update(dt);
+
+            // Disconnected (local) to connected (main database). Now new record is added in database.
+            adapt.Update(dt);
+            Console.WriteLine("Employee added Successfully.");
         }
     }
 
     public static void ListEmployees()
     {
-        using (SqlConnection sqlCon = new SqlConnection(myConnection))
+        using (SqlConnection con = new SqlConnection(conn)) 
         {
-            SqlCommand sqlCmd = new SqlCommand("SELECT * FROM Employees", sqlCon);
-            SqlDataAdapter sqlAdapt = new SqlDataAdapter(sqlCmd);
-            SqlCommandBuilder sqlBuild = new SqlCommandBuilder(sqlAdapt);
-            DataSet ds = new DataSet();
-            sqlAdapt.Fill(ds, "Employees");
+            // If we write anything inside 'using' block, it is persistent till the execution of the function completes.
+            // As soon as the closing braces of the function are encountered, whatever is passed inside using block is removed from memory.
 
-            foreach (DataRow dr in ds.Tables["Employees"].Rows)
-            {
-                Console.WriteLine($"Employee ID: {dr["EmployeeId"]}\tEmployee Name: {dr["EmployeeName"]}\tEmployee Age: {dr["EmployeeAge"]}\tLast Date at Job: {dr["EmployeeLastDateJob"]}");
-            }
+            SqlCommand cmd = new SqlCommand("select * from Employees", con);
+            SqlDataAdapter adapt = new SqlDataAdapter(cmd);
+            SqlCommandBuilder build = new SqlCommandBuilder(adapt);
+            DataSet ds = new DataSet(); // Dataset is a collection of tables
+            adapt.Fill(ds, "Employees"); // Dataset gets disconnected and Employees table is available in DataSet
+
+            DataTable dt = new DataTable();
+            dt = ds.Tables["Employees"]; // Now dt is pointing to 1 table in ds (here, the Employees table)
         }
     }
 
-    public static void DeleteEmployees(int employeeId)
+    public static void DeleteEmployee(int eid)
     {
-        using (SqlConnection sqlCon = new SqlConnection(myConnection))
+        using (SqlConnection con = new SqlConnection(conn)) 
         {
-            SqlCommand sqlCmd = new SqlCommand("SELECT * FROM Employees", sqlCon);
-            SqlDataAdapter sqlAdapt = new SqlDataAdapter(sqlCmd);
-            SqlCommandBuilder sqlBuild = new SqlCommandBuilder(sqlAdapt);
-            DataSet ds = new DataSet();
-            sqlAdapt.Fill(ds, "Employees");
+            // If we write anything inside 'using' block, it is persistent till the execution of the function completes.
+            // As soon as the closing braces of the function are encountered, whatever is passed inside using block is removed from memory.
 
-            DataTable dt = ds.Tables["Employees"];
-            DataRow[] rows = dt.Select($"EmployeeId = {employeeId}");
+            SqlCommand cmd = new SqlCommand("select * from Employees", con);
+            SqlDataAdapter adapt = new SqlDataAdapter(cmd);
+            SqlCommandBuilder build = new SqlCommandBuilder(adapt);
+            DataSet ds = new DataSet(); // Dataset is a collection of tables
+            adapt.Fill(ds, "Employees"); // Dataset gets disconnected and Employees table is available in DataSet
 
-            if (rows.Length > 0)
-            {
-                dt.Rows.Remove(rows[0]);
-                sqlAdapt.Update(dt);
-                Console.WriteLine("Employee deleted successfully.");
-            }
-            else
-            {
-                Console.WriteLine("Employee not found.");
-            }
+            DataTable dt = new DataTable();
+            dt = ds.Tables["Employees"]; // Now dt is pointing to 1 table in ds (here, the Employees table)
+
+            DataRow[] dr = dt.Select($"EmployeeID={eid}"); // 'Select()' function returns a DataRow Type
+            dr[0].Delete(); // At this point record is deleted from dataset (disconnected, local machine)
+
+            // Now deletion is reflected on database
+            adapt.Update(dt);
+            Console.WriteLine("Record Deleted Successfully.");
         }
     }
 
-    public static void Main(string[] args)
+    public static void Main(String[] args)
     {
-        while (true)
+        Console.WriteLine("Menu LTI:");
+        Console.WriteLine("1. Add Employee:");
+        Console.WriteLine("2. List Employee:");
+        Console.WriteLine("3. Delete Employee:");
+        Console.WriteLine("Exit");
+        Console.WriteLine("Enter your choice");
+
+        int choice = int.Parse(Console.ReadLine());
+
+        switch (choice)
         {
-            Console.WriteLine("\n--- Employee Management Menu ---");
-            Console.WriteLine("1. Add Employee");
-            Console.WriteLine("2. List Employees");
-            Console.WriteLine("3. Delete Employee");
-            Console.WriteLine("4. Exit");
-            Console.Write("Enter your choice (1-4): ");
-            int choice = int.Parse(Console.ReadLine());
+            case 1:
+                Console.WriteLine("Enter Details for the new Employee:");
+                string name = Console.ReadLine();
+                int age = int.Parse(Console.ReadLine());
+                string lastDate = Console.ReadLine();
 
-            switch (choice)
-            {
-                case 1:
-                    Console.Write("Enter Employee Name: ");
-                    string name = Console.ReadLine();
-                    Console.Write("Enter Employee Age: ");
-                    int age = int.Parse(Console.ReadLine());
-                    Console.Write("Enter Last Date at Job (yyyy-MM-dd): ");
-                    string lastDate = Console.ReadLine();
+                // At this point, we have to create an object of the Employees class
+                Employees e = new Employees();
+                e.EmployeeName = name;
+                e.EmployeeAge = age;
+                e.EmployeeLastDateJob = lastDate;
 
-                    Employees emp = new Employees
-                    {
-                        EmployeeName = name,
-                        EmployeeAge = age,
-                        EmployeeLastDateJob = lastDate
-                    };
+                // Now, employee data is available in e, i.e., our record is ready. So now we pass it to AddEmployee method.
+                // We are calling static function from static method main => we can call directly
+                AddEmployee(e);
+                break;
 
-                    AddEmployees(emp);
-                    Console.WriteLine("Employee added successfully.");
-                    break;
+            case 2:
+                ListEmployees();
+                break;
 
-                case 2:
-                    ListEmployees();
-                    break;
+            case 3:
+                int id = int.Parse(Console.ReadLine());
+                DeleteEmployee(id);
+                break;
 
-                case 3:
-                    Console.Write("Enter Employee ID to delete: ");
-                    int id = int.Parse(Console.ReadLine());
-                    DeleteEmployees(id);
-                    break;
-
-                case 4:
-                    Console.WriteLine("Exiting...");
-                    return;
-
-                default:
-                    Console.WriteLine("Invalid choice. Please try again.");
-                    break;
-            }
+            case 4:
+                break;
         }
     }
 }
